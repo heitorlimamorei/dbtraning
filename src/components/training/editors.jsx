@@ -1,60 +1,52 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import CodeMirror, {
+  EditorView,
+  keymap,
+} from "@uiw/react-codemirror";
+import { SQLite, sql } from "@codemirror/lang-sql";
+import { oneDark } from "@codemirror/theme-one-dark";
 import { useActiveTextarea } from "@/contexts/active-textarea-context";
-import { HighlightedSQL } from "@/components/training/sql-highlight";
 
 export function SQLEditor({ onChange, onRun, placeholder, value }) {
-  const textareaRef = useRef(null);
-  const overlayRef = useRef(null);
+  const onRunRef = useRef(onRun);
+  const [isFocused, setIsFocused] = useState(false);
 
-  function syncScroll() {
-    if (textareaRef.current && overlayRef.current) {
-      overlayRef.current.scrollLeft = textareaRef.current.scrollLeft;
-      overlayRef.current.scrollTop = textareaRef.current.scrollTop;
-    }
-  }
+  useEffect(() => {
+    onRunRef.current = onRun;
+  }, [onRun]);
 
-  function handleKeyDown(event) {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-      event.preventDefault();
-      onRun?.();
-    }
-
-    if (event.key === "Tab") {
-      event.preventDefault();
-      const start = event.target.selectionStart;
-      const end = event.target.selectionEnd;
-      const nextValue = value.slice(0, start) + "  " + value.slice(end);
-
-      onChange(nextValue);
-
-      requestAnimationFrame(() => {
-        event.target.selectionStart = start + 2;
-        event.target.selectionEnd = start + 2;
-      });
-    }
-  }
-
-  const sharedStyle = {
-    fontFamily: "var(--font-mono)",
-    fontSize: 13,
-    lineHeight: 1.7,
-    padding: "14px 16px",
-    paddingTop: 28,
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-  };
+  const extensions = useMemo(
+    () => [
+      sql({ dialect: SQLite }),
+      EditorView.contentAttributes.of({
+        "aria-label": "Editor SQL",
+        spellcheck: "false",
+      }),
+      keymap.of([
+        {
+          key: "Mod-Enter",
+          run() {
+            onRunRef.current?.();
+            return true;
+          },
+        },
+      ]),
+    ],
+    [],
+  );
 
   return (
     <div
       style={{
         background: "#282C34",
-        border: "2px solid #3E4451",
+        border: `2px solid ${isFocused ? "#528BFF" : "#3E4451"}`,
         borderRadius: 12,
+        boxShadow: isFocused ? "0 0 0 3px rgba(82, 139, 255, 0.16)" : "none",
         overflow: "hidden",
         position: "relative",
-        transition: "border-color 0.2s",
+        transition: "border-color 0.15s, box-shadow 0.15s",
       }}
     >
       <div
@@ -74,56 +66,25 @@ export function SQLEditor({ onChange, onRun, placeholder, value }) {
       >
         SQL
       </div>
-      <div
-        ref={overlayRef}
-        aria-hidden="true"
-        style={{
-          ...sharedStyle,
-          color: "#ABB2BF",
-          inset: 0,
-          overflow: "hidden",
-          pointerEvents: "none",
-          position: "absolute",
-          zIndex: 1,
+      <CodeMirror
+        basicSetup={{
+          foldGutter: false,
+          highlightActiveLineGutter: false,
+          lineNumbers: false,
         }}
-      >
-        <HighlightedSQL code={value} />
-      </div>
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onScroll={syncScroll}
+        className="sql-code-editor"
+        extensions={extensions}
+        indentWithTab
+        minHeight="150px"
+        onBlur={() => setIsFocused(false)}
+        onChange={onChange}
+        onFocus={() => setIsFocused(true)}
         placeholder={placeholder}
-        spellCheck={false}
+        theme={oneDark}
+        value={value}
         style={{
-          ...sharedStyle,
-          background: "transparent",
-          border: "none",
-          boxSizing: "border-box",
-          caretColor: "#528BFF",
-          color: "transparent",
-          minHeight: 130,
-          outline: "none",
-          position: "relative",
-          resize: "vertical",
-          width: "100%",
-          zIndex: 2,
-        }}
-        onBlur={(event) => {
-          const container = event.target.closest('[data-editor="sql"]');
-
-          if (container) {
-            container.style.borderColor = "#3E4451";
-          }
-        }}
-        onFocus={(event) => {
-          const container = event.target.closest('[data-editor="sql"]');
-
-          if (container) {
-            container.style.borderColor = "#528BFF";
-          }
+          fontFamily: "var(--font-mono)",
+          fontSize: 13,
         }}
       />
     </div>

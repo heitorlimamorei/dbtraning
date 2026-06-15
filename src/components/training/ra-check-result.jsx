@@ -24,10 +24,10 @@ export function RACheckResult({ result }) {
         <span style={{ fontSize: 22 }}>✅</span>
         <div>
           <div style={{ color: "#2E7D32", fontSize: 13, fontWeight: 700 }}>
-            Expressão correta!
+            Resultado correto!
           </div>
           <div style={{ color: "#43A047", fontSize: 11, marginTop: 2 }}>
-            Sua álgebra relacional corresponde ao gabarito após a normalização.
+            A expressão foi executada e retornou o mesmo resultado do gabarito.
           </div>
         </div>
       </div>
@@ -54,7 +54,10 @@ export function RACheckResult({ result }) {
       border: "#EF9A9A50",
       color: "#B71C1C",
       icon: "❌",
-      label: "Expressão muito diferente do gabarito.",
+      label:
+        result.executionMatch === false
+          ? "A expressão executou, mas o resultado difere do gabarito."
+          : "Expressão muito diferente do gabarito.",
     },
   }[result.status];
 

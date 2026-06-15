@@ -2,31 +2,29 @@
 
 import { useCallback, useState } from "react";
 import { useDb } from "@/contexts/db-context";
-import { compareQueryResults, compareRA, compileRA } from "@/lib/ra";
-import { RACheckResult } from "@/components/training/ra-check-result";
 import { ResultsTable } from "@/components/training/results-table";
 import { HighlightedSQL } from "@/components/training/sql-highlight";
-import { RAEditor, SQLEditor } from "@/components/training/editors";
-import { QueryInsights } from "@/components/training/query-insights";
-import { RAInsights } from "@/components/training/ra-insights";
+import { SQLEditor } from "@/components/training/editors";
+import { TuningInsights } from "@/components/tuning/tuning-insights";
 
 function DifficultyBadge({ level }) {
   const labels = ["", "Fácil", "Médio", "Difícil", "Avançado"];
   const colors = ["", "#6BCB77", "#E8A87C", "#E57373", "#BA68C8"];
+  const safeLevel = level > 4 ? 4 : level;
 
   return (
     <span
       style={{
-        border: `1px solid ${colors[level]}40`,
+        border: `1px solid ${colors[safeLevel]}40`,
         borderRadius: 12,
-        color: colors[level],
+        color: colors[safeLevel],
         fontSize: 11,
         fontWeight: 600,
         letterSpacing: 0.5,
         padding: "2px 10px",
       }}
     >
-      {"●".repeat(level)} {labels[level]}
+      {"●".repeat(safeLevel)} {labels[safeLevel]}
     </span>
   );
 }
@@ -55,15 +53,13 @@ function ConceptTags({ concepts }) {
   );
 }
 
-export function QuestionCard({ categoryColor, index, question }) {
+export function TuningQuestionCard({ categoryColor, index, question }) {
   const database = useDb();
-  const [raValue, setRaValue] = useState("");
   const [sqlValue, setSqlValue] = useState("");
   const [showHint, setShowHint] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const [result, setResult] = useState(null);
   const [running, setRunning] = useState(false);
-  const [raCheck, setRaCheck] = useState(null);
 
   const executeSql = useCallback(
     (sql) => {
@@ -106,56 +102,6 @@ export function QuestionCard({ categoryColor, index, question }) {
     },
     [database],
   );
-
-  const executeRa = useCallback(() => {
-    if (!database || !raValue.trim()) {
-      return;
-    }
-
-    setRunning(true);
-
-    try {
-      const compiled = compileRA(raValue);
-      const start = performance.now();
-      const response = database.exec(compiled.sql);
-      const end = performance.now();
-      const expectedResponse = database.exec(question.sqlAnswer);
-      const matches = compareQueryResults(response, expectedResponse);
-      const structuralCheck = compareRA(raValue, question.answer);
-
-      setResult(
-        response.length === 0
-          ? {
-              columns: compiled.columns,
-              error: null,
-              rows: [],
-              time: end - start,
-            }
-          : {
-              columns: response[0].columns,
-              error: null,
-              rows: response[0].values,
-              time: end - start,
-            },
-      );
-      setRaCheck({
-        ...structuralCheck,
-        executionMatch: matches,
-        score: matches ? 1 : structuralCheck.score,
-        status: matches ? "correct" : "wrong",
-      });
-    } catch (error) {
-      setRaCheck(null);
-      setResult({
-        columns: null,
-        error: error.message,
-        rows: null,
-        time: null,
-      });
-    }
-
-    setRunning(false);
-  }, [database, question.answer, question.sqlAnswer, raValue]);
 
   return (
     <div
@@ -203,10 +149,46 @@ export function QuestionCard({ categoryColor, index, question }) {
               fontWeight: 500,
               lineHeight: 1.6,
               margin: 0,
+              whiteSpace: "pre-wrap",
             }}
           >
             {question.text}
           </p>
+          {question.originalSql && (
+            <div
+              style={{
+                marginTop: 12,
+                background: "#282C34",
+                borderLeft: "3px solid #BA68C8",
+                borderRadius: 8,
+                padding: "12px 16px",
+              }}
+            >
+              <div
+                style={{
+                  color: "#BA68C8",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  marginBottom: 6,
+                  textTransform: "uppercase",
+                }}
+              >
+                Consulta Original
+              </div>
+              <pre
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  margin: 0,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                <HighlightedSQL code={question.originalSql} />
+              </pre>
+            </div>
+          )}
           <div
             style={{
               alignItems: "center",
@@ -234,38 +216,13 @@ export function QuestionCard({ categoryColor, index, question }) {
               textTransform: "uppercase",
             }}
           >
-            Álgebra Relacional
-          </label>
-          <RAEditor
-            editorId={`${question.id}_ra`}
-            onChange={(value) => {
-              setRaValue(value);
-              setRaCheck(null);
-            }}
-            placeholder="π(first_name, last_name)(σ(gender = 'F')(actors))"
-            value={raValue}
-          />
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <label
-            style={{
-              color: "#8B8FA3",
-              display: "block",
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: 0.8,
-              marginBottom: 6,
-              textTransform: "uppercase",
-            }}
-          >
-            SQL
+            SQL Tunado
           </label>
           <div data-editor="sql">
             <SQLEditor
               onChange={setSqlValue}
               onRun={() => executeSql(sqlValue)}
-              placeholder="SELECT first_name, last_name FROM actors WHERE gender = 'F';"
+              placeholder="Digite a consulta SQL reescrita (otimizada)..."
               value={sqlValue}
             />
           </div>
@@ -310,34 +267,6 @@ export function QuestionCard({ categoryColor, index, question }) {
             </span>
           </button>
           <button
-            onClick={executeRa}
-            disabled={!database || running || !raValue.trim()}
-            style={{
-              alignItems: "center",
-              background: !database || !raValue.trim()
-                ? "#E2E4EA"
-                : raCheck?.status === "correct"
-                  ? "linear-gradient(135deg,#43A047,#66BB6A)"
-                  : "linear-gradient(135deg,#7C4DFF,#9C6FFF)",
-              border: "none",
-              borderRadius: 10,
-              boxShadow: !database || !raValue.trim()
-                ? "none"
-                : "0 2px 8px rgba(124,77,255,0.3)",
-              color: "#fff",
-              cursor:
-                !database || !raValue.trim() ? "default" : "pointer",
-              display: "inline-flex",
-              fontSize: 12,
-              fontWeight: 700,
-              gap: 5,
-              padding: "8px 16px",
-            }}
-          >
-            {running ? "⏳" : raCheck?.status === "correct" ? "✅" : "▶"}{" "}
-            Executar RA
-          </button>
-          <button
             onClick={() => setShowHint(!showHint)}
             style={{
               background: showHint ? "#FFF9E6" : "#fff",
@@ -352,11 +281,10 @@ export function QuestionCard({ categoryColor, index, question }) {
           >
             💡 {showHint ? "Ocultar" : "Dica"}
           </button>
-          <QueryInsights
-            question={question}
-            sqlValue={sqlValue}
-          />
-          <RAInsights question={question} raValue={raValue} />
+          
+          {/* Botão para chamar a IA do Tuning */}
+          <TuningInsights question={question} sqlValue={sqlValue} />
+
           <button
             onClick={() => setShowAnswer(true)}
             style={{
@@ -370,31 +298,9 @@ export function QuestionCard({ categoryColor, index, question }) {
               padding: "8px 16px",
             }}
           >
-            {showAnswer ? "✓ Gabarito" : "Ver Gabarito"}
+            {showAnswer ? "✓ Sugestão (Gabarito)" : "Ver Sugestão"}
           </button>
-          <a
-            href="https://dbis-uibk.github.io/relax/calc/local/uibk/local/0"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              alignItems: "center",
-              background: "#EFF6FF",
-              border: "1px solid #3D5AFE30",
-              borderRadius: 10,
-              color: "#3D5AFE",
-              display: "inline-flex",
-              fontSize: 12,
-              fontWeight: 600,
-              gap: 4,
-              padding: "8px 14px",
-              textDecoration: "none",
-            }}
-          >
-            ↗ RelaX
-          </a>
         </div>
-
-        {raCheck && <RACheckResult result={raCheck} />}
 
         {result && (
           <ResultsTable
@@ -426,40 +332,6 @@ export function QuestionCard({ categoryColor, index, question }) {
           <div style={{ marginTop: 12 }}>
             <div
               style={{
-                background: "#F3F0FF",
-                borderLeft: "3px solid #7C4DFF",
-                borderRadius: 10,
-                marginBottom: 8,
-                padding: "14px 16px",
-              }}
-            >
-              <div
-                style={{
-                  color: "#7C4DFF",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  marginBottom: 6,
-                  textTransform: "uppercase",
-                }}
-              >
-                Gabarito — Álgebra Relacional
-              </div>
-              <pre
-                style={{
-                  color: "#1A1D29",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 12,
-                  lineHeight: 1.7,
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {question.answer}
-              </pre>
-            </div>
-            <div
-              style={{
                 background: "#282C34",
                 borderLeft: "3px solid #61AFEF",
                 borderRadius: 10,
@@ -483,7 +355,7 @@ export function QuestionCard({ categoryColor, index, question }) {
                     textTransform: "uppercase",
                   }}
                 >
-                  Gabarito — SQL
+                  Sugestão de SQL Otimizado
                 </div>
                 <button
                   onClick={() => executeSql(question.sqlAnswer)}
@@ -499,7 +371,7 @@ export function QuestionCard({ categoryColor, index, question }) {
                     padding: "3px 12px",
                   }}
                 >
-                  ▶ Rodar gabarito
+                  ▶ Rodar sugestão
                 </button>
               </div>
               <pre

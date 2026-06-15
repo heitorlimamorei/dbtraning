@@ -1,3 +1,7 @@
+@import "tailwindcss";
+@source "../node_modules/streamdown/dist/*.js";
+@source "../node_modules/@streamdown/code/dist/*.js";
+
 :root {
   --background: #f2f3f7;
   --foreground: #1a1d29;
@@ -44,6 +48,57 @@ select {
 pre,
 code {
   font-family: var(--font-mono);
+}
+
+.sql-code-editor .cm-editor {
+  background: #282c34;
+  min-height: 150px;
+}
+
+.sql-code-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.sql-code-editor .cm-scroller {
+  font-family: var(--font-mono);
+  line-height: 1.7;
+  overflow: auto;
+  scrollbar-color: #5c6370 #282c34;
+  scrollbar-width: thin;
+}
+
+.sql-code-editor .cm-content {
+  caret-color: #7aa2ff;
+  padding: 30px 16px 16px;
+}
+
+.sql-code-editor .cm-line {
+  padding: 0;
+}
+
+.sql-code-editor .cm-placeholder {
+  color: #737987;
+  font-style: normal;
+}
+
+.sql-code-editor .cm-selectionBackground,
+.sql-code-editor .cm-content ::selection {
+  background: rgba(82, 139, 255, 0.42) !important;
+}
+
+.sql-code-editor .cm-scroller::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.sql-code-editor .cm-scroller::-webkit-scrollbar-thumb {
+  background: #5c6370;
+  border: 2px solid #282c34;
+  border-radius: 8px;
+}
+
+.sql-code-editor .cm-scroller::-webkit-scrollbar-track {
+  background: #282c34;
 }
 
 @keyframes pulse {

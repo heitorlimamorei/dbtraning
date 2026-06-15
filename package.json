@@ -3,15 +3,29 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "NEXT_DIST_DIR=.next-dev next dev",
+    "build": "NEXT_DIST_DIR=.next-build next build",
+    "start": "NEXT_DIST_DIR=.next-build next start",
+    "lint": "next lint",
+    "test": "node --experimental-default-type=module --test"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.80",
+    "@ai-sdk/react": "^3.0.200",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "@streamdown/code": "^1.1.1",
+    "@uiw/react-codemirror": "^4.25.10",
+    "ai": "^6.0.198",
     "next": "15.5.15",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "sql.js": "1.10.3"
+    "react": "^19.1.2",
+    "react-dom": "^19.1.2",
+    "sql.js": "1.10.3",
+    "streamdown": "^2.5.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "tailwindcss": "^4.3.0"
   }
 }

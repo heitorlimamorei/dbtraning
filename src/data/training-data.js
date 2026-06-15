@@ -239,7 +239,7 @@ export const QUESTIONS = [
     text: "Projetar o nome do filme e o nome do diretor de cada filme.",
     hint: "Junção (⋈) de movies, movies_directors e directors. Use ρ para renomear atributos homônimos.",
     answer:
-      "ρ(d_first_name / first_name, d_last_name / last_name)(directors)\n\nπ(name, d_first_name, d_last_name)(\n  (movies ⋈(id = movie_id) movies_directors)\n  ⋈(director_id = d_id) ρ(d_id / id, d_first_name / first_name, d_last_name / last_name)(directors)\n)",
+      "π(name, d_first_name, d_last_name)(\n  (movies ⋈(id = movie_id) movies_directors)\n  ⋈(director_id = d_id) ρ(d_id / id, d_first_name / first_name, d_last_name / last_name)(directors)\n)",
     sqlAnswer:
       "SELECT m.name, d.first_name, d.last_name\nFROM movies m\nJOIN movies_directors md ON m.id = md.movie_id\nJOIN directors d ON md.director_id = d.id;",
     difficulty: 2,

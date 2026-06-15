@@ -1,4 +1,5 @@
 import { DM_Sans, IBM_Plex_Mono } from "next/font/google";
+import "streamdown/styles.css";
 import "./globals.css";
 
 const dmSans = DM_Sans({

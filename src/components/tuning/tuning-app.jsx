@@ -4,34 +4,54 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ActiveTextareaProvider } from "@/contexts/active-textarea-context";
 import { DbProvider } from "@/contexts/db-context";
-import { CATEGORIES, QUESTIONS } from "@/data/training-data";
+import { TUNING_CATEGORIES, TUNING_QUESTIONS } from "@/data/tuning-data";
 import { useSqlite } from "@/hooks/use-sqlite";
 import { SchemaSidebar } from "@/components/training/schema-sidebar";
 import { DbStatus } from "@/components/training/db-status";
-import { SymbolsBar } from "@/components/training/symbols-bar";
-import { QuestionCard } from "@/components/training/question-card";
+import { TuningQuestionCard } from "@/components/tuning/tuning-question-card";
 
 const DIFFICULTY_FILTERS = ["Todas", "Fácil", "Médio", "Difícil", "Avançado"];
 
-export function TrainingApp() {
-  const [activeCategoryId, setActiveCategoryId] = useState("ho04");
+export function TuningApp({
+  categories = TUNING_CATEGORIES,
+  questions = TUNING_QUESTIONS,
+  pageDescription = "Sintonia de Consultas · IMDB-sample · IA Avaliadora",
+  pageTitle = "Treinamento de Tuning BD",
+  siblingTabs = [
+    {
+      count: 6,
+      href: "/tuning/desafios",
+      icon: "◆",
+      label: "Desafios",
+      position: "after",
+    },
+    {
+      count: 12,
+      href: "/tuning/reescritas",
+      icon: "⇄",
+      label: "Reescritas",
+      position: "after",
+    },
+  ],
+}) {
+  const [activeCategoryId, setActiveCategoryId] = useState(categories[0].id);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [difficultyFilter, setDifficultyFilter] = useState(0);
   const { database, status } = useSqlite();
 
   const filteredQuestions = useMemo(
     () =>
-      QUESTIONS.filter(
+      questions.filter(
         (question) =>
           question.category === activeCategoryId &&
           (difficultyFilter === 0 || question.difficulty === difficultyFilter),
       ),
-    [activeCategoryId, difficultyFilter],
+    [activeCategoryId, difficultyFilter, questions],
   );
 
   const activeCategory = useMemo(
-    () => CATEGORIES.find((category) => category.id === activeCategoryId),
-    [activeCategoryId],
+    () => categories.find((category) => category.id === activeCategoryId),
+    [activeCategoryId, categories],
   );
 
   return (
@@ -61,7 +81,7 @@ export function TrainingApp() {
           >
             <header
               style={{
-                background: "linear-gradient(135deg, #1A1D29, #2D3148)",
+                background: "linear-gradient(135deg, #2D1A3B, #4B2B64)",
                 color: "#fff",
                 padding: "20px 24px 16px",
               }}
@@ -86,10 +106,10 @@ export function TrainingApp() {
                           margin: 0,
                         }}
                       >
-                        Treinamento BD
+                        {pageTitle}
                       </h1>
                       <Link 
-                        href="/tuning"
+                        href="/"
                         style={{
                           background: "rgba(255,255,255,0.1)",
                           borderRadius: 8,
@@ -100,18 +120,18 @@ export function TrainingApp() {
                           textDecoration: "none",
                         }}
                       >
-                        Tuning Avançado →
+                        ← Voltar ao Clássico
                       </Link>
                     </div>
                     <p
                       style={{
-                        color: "#9CA0B0",
+                        color: "#B496CD",
                         fontSize: 13,
                         fontWeight: 500,
                         margin: "3px 0 0",
                       }}
                     >
-                      Álgebra Relacional & SQL · IMDB-sample · SQLite no navegador
+                      {pageDescription}
                     </p>
                   </div>
                   <DbStatus status={status} />
@@ -126,9 +146,14 @@ export function TrainingApp() {
                     paddingBottom: 4,
                   }}
                 >
-                  {CATEGORIES.map((category) => {
+                  {siblingTabs
+                    .filter((tab) => tab.position === "before")
+                    .map((tab) => (
+                      <TuningPageTab key={tab.href} tab={tab} />
+                    ))}
+                  {categories.map((category) => {
                     const isActive = activeCategoryId === category.id;
-                    const questionCount = QUESTIONS.filter(
+                    const questionCount = questions.filter(
                       (question) => question.category === category.id,
                     ).length;
 
@@ -146,7 +171,7 @@ export function TrainingApp() {
                             : "rgba(255,255,255,0.06)",
                           border: "none",
                           borderRadius: 11,
-                          color: isActive ? "#fff" : "#9CA0B0",
+                          color: isActive ? "#fff" : "#B496CD",
                           cursor: "pointer",
                           display: "flex",
                           fontSize: 12,
@@ -175,6 +200,11 @@ export function TrainingApp() {
                       </button>
                     );
                   })}
+                  {siblingTabs
+                    .filter((tab) => tab.position !== "before")
+                    .map((tab) => (
+                      <TuningPageTab key={tab.href} tab={tab} />
+                    ))}
                 </div>
               </div>
             </header>
@@ -250,10 +280,8 @@ export function TrainingApp() {
                 </div>
               </div>
 
-              <SymbolsBar />
-
               {filteredQuestions.map((question, index) => (
-                <QuestionCard
+                <TuningQuestionCard
                   key={question.id}
                   categoryColor={activeCategory.color}
                   index={index}
@@ -278,5 +306,41 @@ export function TrainingApp() {
         </div>
       </DbProvider>
     </ActiveTextareaProvider>
+  );
+}
+
+function TuningPageTab({ tab }) {
+  return (
+    <Link
+      href={tab.href}
+      style={{
+        alignItems: "center",
+        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: 11,
+        color: "#B496CD",
+        display: "flex",
+        fontSize: 12,
+        fontWeight: 700,
+        gap: 7,
+        padding: "9px 14px",
+        textDecoration: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ fontSize: 17 }}>{tab.icon}</span>
+      <span>{tab.label}</span>
+      <span
+        style={{
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: 7,
+          fontSize: 10,
+          fontWeight: 800,
+          padding: "1px 7px",
+        }}
+      >
+        {tab.count}
+      </span>
+    </Link>
   );
 }
