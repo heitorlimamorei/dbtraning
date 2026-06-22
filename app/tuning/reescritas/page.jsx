@@ -32,6 +32,13 @@ export default function RewriteTuningPage() {
           label: "Desafios",
           position: "before",
         },
+        {
+          count: 8,
+          href: "/tuning/nulos",
+          icon: "∅",
+          label: "Nulos",
+          position: "after",
+        },
       ]}
     />
   );

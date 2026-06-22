@@ -5,6 +5,7 @@ import initSqlJs from "sql.js";
 
 import { ADVANCED_TUNING_QUESTIONS } from "../src/data/tuning-advanced-data.js";
 import { TUNING_QUESTIONS } from "../src/data/tuning-data.js";
+import { NULL_TUNING_QUESTIONS } from "../src/data/tuning-null-data.js";
 import { REWRITE_TUNING_QUESTIONS } from "../src/data/tuning-rewrite-data.js";
 import { SEED_SQL } from "../src/data/training-data.js";
 
@@ -50,11 +51,16 @@ test("reescritas de operadores preservam os resultados", async () => {
   await assertEquivalentQueries(REWRITE_TUNING_QUESTIONS);
 });
 
+test("reescritas de nulos preservam os resultados", async () => {
+  await assertEquivalentQueries(NULL_TUNING_QUESTIONS);
+});
+
 test("enunciados de tuning possuem consultas e orientações completas", () => {
   for (const question of [
     ...TUNING_QUESTIONS,
     ...ADVANCED_TUNING_QUESTIONS,
     ...REWRITE_TUNING_QUESTIONS,
+    ...NULL_TUNING_QUESTIONS,
   ]) {
     assert.match(question.text, /^Exercício \d+:/);
     assert.ok(question.originalSql.trim().endsWith(";"));
@@ -62,6 +68,35 @@ test("enunciados de tuning possuem consultas e orientações completas", () => {
     assert.ok(question.hint.length > 40);
     assert.ok(question.concepts.length >= 2);
   }
+});
+
+test("o lote de nulos substitui IS NULL e IS NOT NULL", () => {
+  const originalSql = NULL_TUNING_QUESTIONS.map(
+    (question) => question.originalSql,
+  ).join("\n");
+  const rewrittenSql = NULL_TUNING_QUESTIONS.map(
+    (question) => question.sqlAnswer,
+  ).join("\n");
+
+  assert.equal(NULL_TUNING_QUESTIONS.length, 8);
+  assert.match(originalSql, /\bIS\s+NULL\b/i);
+  assert.match(originalSql, /\bIS\s+NOT\s+NULL\b/i);
+  assert.doesNotMatch(rewrittenSql, /\bIS\s+NULL\b/i);
+  assert.doesNotMatch(rewrittenSql, /\bIS\s+NOT\s+NULL\b/i);
+  assert.match(rewrittenSql, /\bJOIN\b/i);
+  assert.match(rewrittenSql, /\bHAVING\s+COUNT\(/i);
+  assert.match(rewrittenSql, /\bBETWEEN\b/i);
+
+  assert.equal(
+    NULL_TUNING_QUESTIONS.filter((question) => question.difficulty === 2)
+      .length,
+    5,
+  );
+  assert.equal(
+    NULL_TUNING_QUESTIONS.filter((question) => question.difficulty === 3)
+      .length,
+    3,
+  );
 });
 
 test("o lote de reescritas cobre os operadores pedidos nos níveis médio e difícil", () => {

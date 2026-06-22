@@ -102,6 +102,34 @@ export function TrainingApp() {
                       >
                         Tuning Avançado →
                       </Link>
+                      <Link
+                        href="/transacoes"
+                        style={{
+                          background: "rgba(255,255,255,0.1)",
+                          borderRadius: 8,
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "4px 10px",
+                          textDecoration: "none",
+                        }}
+                      >
+                        Transações →
+                      </Link>
+                      <Link
+                        href="/indices"
+                        style={{
+                          background: "rgba(255,255,255,0.1)",
+                          borderRadius: 8,
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "4px 10px",
+                          textDecoration: "none",
+                        }}
+                      >
+                        Índices →
+                      </Link>
                     </div>
                     <p
                       style={{

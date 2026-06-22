@@ -32,6 +32,13 @@ export function TuningApp({
       label: "Reescritas",
       position: "after",
     },
+    {
+      count: 8,
+      href: "/tuning/nulos",
+      icon: "∅",
+      label: "Nulos",
+      position: "after",
+    },
   ],
 }) {
   const [activeCategoryId, setActiveCategoryId] = useState(categories[0].id);
@@ -121,6 +128,34 @@ export function TuningApp({
                         }}
                       >
                         ← Voltar ao Clássico
+                      </Link>
+                      <Link
+                        href="/transacoes"
+                        style={{
+                          background: "rgba(255,255,255,0.1)",
+                          borderRadius: 8,
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "4px 10px",
+                          textDecoration: "none",
+                        }}
+                      >
+                        Transações →
+                      </Link>
+                      <Link
+                        href="/indices"
+                        style={{
+                          background: "rgba(255,255,255,0.1)",
+                          borderRadius: 8,
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "4px 10px",
+                          textDecoration: "none",
+                        }}
+                      >
+                        Índices →
                       </Link>
                     </div>
                     <p

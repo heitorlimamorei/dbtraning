@@ -130,6 +130,10 @@ code {
 }
 
 @media (max-width: 900px) {
+  .transaction-exercise-grid {
+    grid-template-columns: 1fr !important;
+  }
+
   .schema-sidebar {
     position: fixed !important;
     left: 0;
